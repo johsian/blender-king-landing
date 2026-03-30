@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blender King — Power. Precision. Perfection.</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Jost:wght@200;300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ['"Bodoni Moda"', 'Georgia', 'serif'],
+            body: ['Jost', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            gold: {
+              DEFAULT: '#CA8A04',
+              light: '#EAB308',
+              dim: '#92400E',
+            },
+          },
+          animation: {
+            'fade-up': 'fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'bounce-slow': 'bounceSlow 2s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeUp: {
+              '0%': { opacity: '0', transform: 'translateY(40px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            bounceSlow: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(8px)' },
+            },
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    :root {
+      --gold: #CA8A04;
+      --gold-light: #EAB308;
+      --glass-bg: rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-hover: rgba(202, 138, 4, 0.15);
+      --glass-hover-border: rgba(202, 138, 4, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: transparent;
+      color: #fff;
+      font-family: 'Jost', system-ui, sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Typography ── */
+    .font-heading { font-family: 'Bodoni Moda', Georgia, serif; }
+    .font-body    { font-family: 'Jost', system-ui, sans-serif; }
+
+    /* ── Glassmorphism ── */
+    .glass {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .glass-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+      cursor: default;
+    }
+
+    .glass-card:hover {
+      background: var(--glass-hover);
+      border-color: var(--glass-hover-border);
+      box-shadow: 0 0 40px rgba(202, 138, 4, 0.08);
+    }
+
+    /* ── Navbar ── */
+    #navbar {
+      transition: background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease;
+    }
+
+    #navbar.scrolled {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .nav-link {
+      position: relative;
+      transition: color 0.2s ease;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--gold);
+      transition: width 0.3s ease;
+    }
+
+    .nav-link:hover { color: #fff; }
+    .nav-link:hover::after { width: 100%; }
+
+    /* ── Hero Canvas (frame scrubbing) — fixed behind entire page ── */
+    #hero-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: -2;
+    }
+
+    /* ── Global dark overlay — ensures text readability over video ── */
+    #bg-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* ── Frame progress bar ── */
+    #frame-progress {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      width: 0%;
+      background: linear-gradient(90deg, #CA8A04, #EAB308);
+      z-index: 100;
+      transition: width 0.04s linear;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.25) 0%,
+        rgba(0, 0, 0, 0.15) 30%,
+        rgba(0, 0, 0, 0.4) 65%,
+        rgba(0, 0, 0, 0.92) 85%,
+        #000 100%
+      );
+    }
+
+    /* ── Scroll Animations ── */
+    [data-animate] {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    [data-animate].visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Hero text stagger ── */
+    .hero-label   { animation: fadeUp 0.9s 0.2s cubic-bezier(0.16,1,0.3,1) both; }
+    .hero-title   { animation: fadeUp 0.9s 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+    .hero-tagline { animation: fadeUp 0.9s 0.6s cubic-bezier(0.16,1,0.3,1) both; }
+    .hero-ctas    { animation: fadeUp 0.9s 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+    .hero-scroll  { animation: fadeUp 0.9s 1.1s cubic-bezier(0.16,1,0.3,1) both; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Scroll chevron bounce ── */
+    .bounce-arrow {
+      animation: bounceSlow 2.2s ease-in-out infinite;
+    }
+
+    @keyframes bounceSlow {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(9px); }
+    }
+
+    /* ── Gold gradient text ── */
+    .gold-text {
+      background: linear-gradient(135deg, #CA8A04 0%, #EAB308 50%, #CA8A04 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Gold button ── */
+    .btn-gold {
+      background: linear-gradient(135deg, #CA8A04, #EAB308);
+      color: #000;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-gold:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(202, 138, 4, 0.35);
+    }
+
+    .btn-ghost {
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      border-color: rgba(255,255,255,0.6);
+      transform: translateY(-1px);
+    }
+
+    /* ── Specs row ── */
+    .spec-row {
+      border-bottom: 1px solid rgba(202, 138, 4, 0.12);
+      transition: background 0.2s ease;
+    }
+
+    .spec-row:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .spec-row:last-child {
+      border-bottom: none;
+    }
+
+    /* ── CTA section glow strip ── */
+    .cta-glow {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #CA8A04, #EAB308, #CA8A04, transparent);
+    }
+
+    /* ── Section divider ── */
+    .divider {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #CA8A04, transparent);
+    }
+
+    /* ── Mobile menu ── */
+    #mobile-menu {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    #mobile-menu.hidden {
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+    }
+
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      [data-animate], .hero-label, .hero-title, .hero-tagline, .hero-ctas, .hero-scroll,
+      .bounce-arrow, .btn-gold, .btn-ghost, .glass-card, .nav-link::after {
+        transition: none !important;
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body class="text-white font-body">
+
+  <!-- Fixed canvas background — persists for entire page scroll -->
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div id="bg-overlay"></div>
+  <div id="frame-progress"></div>
+
+  <!-- ══════════════════════════════════════════
+       NAVBAR
+  ══════════════════════════════════════════ -->
+  <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+
+      <!-- Wordmark -->
+      <a href="#hero" class="font-heading text-xl font-bold tracking-widest uppercase text-white" style="letter-spacing: 0.2em;">
+        Blender King
+      </a>
+
+      <!-- Desktop Nav -->
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#features" class="nav-link text-sm font-body font-400 text-white/60 tracking-wider uppercase" style="letter-spacing:0.12em; font-size:0.78rem;">Features</a>
+        <a href="#story" class="nav-link text-sm font-body font-400 text-white/60 tracking-wider uppercase" style="letter-spacing:0.12em; font-size:0.78rem;">Story</a>
+        <a href="#specs" class="nav-link text-sm font-body font-400 text-white/60 tracking-wider uppercase" style="letter-spacing:0.12em; font-size:0.78rem;">Specs</a>
+        <a href="#order" class="btn-gold font-body text-xs font-semibold tracking-widest uppercase px-5 py-2.5 rounded-full cursor-pointer" style="letter-spacing:0.14em;">Order Now</a>
+      </div>
+
+      <!-- Mobile Hamburger -->
+      <button id="menu-toggle" class="md:hidden flex flex-col gap-1.5 p-2 cursor-pointer" aria-label="Toggle menu">
+        <span class="block w-6 h-px bg-white transition-all duration-300" id="bar1"></span>
+        <span class="block w-6 h-px bg-white transition-all duration-300" id="bar2"></span>
+        <span class="block w-4 h-px bg-white transition-all duration-300 self-end" id="bar3"></span>
+      </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden">
+      <div class="glass mt-3 mx-0 rounded-2xl p-6 flex flex-col gap-5">
+        <a href="#features" class="font-body text-white/70 tracking-wider uppercase text-sm">Features</a>
+        <a href="#story" class="font-body text-white/70 tracking-wider uppercase text-sm">Story</a>
+        <a href="#specs" class="font-body text-white/70 tracking-wider uppercase text-sm">Specs</a>
+        <a href="#order" class="btn-gold font-body text-xs font-semibold tracking-widest uppercase px-5 py-3 rounded-full text-center">Order Now</a>
+      </div>
+    </div>
+  </nav>
+
+
+  <!-- ══════════════════════════════════════════
+       HERO — FULL SCREEN WITH FRAME BACKGROUND
+  ══════════════════════════════════════════ -->
+  <section id="hero" style="position: relative; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+
+    <!-- Bottom gradient: hero bleeds into content below -->
+    <div class="hero-overlay"></div>
+
+    <!-- Hero content -->
+    <div id="hero-content" style="position: relative; z-index: 10; text-align: center; padding: 0 1.5rem;">
+
+      <p class="hero-label font-body text-xs tracking-widest uppercase mb-6" style="color: #CA8A04; letter-spacing: 0.3em;">
+        Introducing
+      </p>
+
+      <h1 class="hero-title font-heading font-bold text-white leading-none mb-6"
+          style="font-size: clamp(3.5rem, 12vw, 9rem); letter-spacing: -0.01em;">
+        Blender<br/>
+        <em class="not-italic gold-text">King</em>
+      </h1>
+
+      <p class="hero-tagline font-body font-light text-white/60 mb-10 tracking-widest uppercase"
+         style="font-size: clamp(0.85rem, 2vw, 1.1rem); letter-spacing: 0.3em;">
+        Power &nbsp;·&nbsp; Precision &nbsp;·&nbsp; Perfection
+      </p>
+
+      <div class="hero-ctas flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="#order" class="btn-gold font-body font-semibold tracking-widest uppercase px-10 py-4 rounded-full text-sm" style="letter-spacing:0.14em; min-width:180px;">
+          Shop Now
+        </a>
+        <a href="#story" class="btn-ghost font-body font-normal tracking-wider uppercase px-10 py-4 rounded-full text-sm" style="letter-spacing:0.14em; min-width:180px;">
+          Watch Story
+        </a>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="hero-scroll" style="position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; opacity: 0.4;">
+      <span class="font-body tracking-widest uppercase" style="letter-spacing:0.2em; font-size:0.65rem;">Scroll</span>
+      <svg class="bounce-arrow w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M8 3L8 13M8 13L4 9M8 13L12 9" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       FEATURES — BENTO GLASSMORPHISM GRID
+  ══════════════════════════════════════════ -->
+  <section id="features" class="py-32 px-6">
+    <div class="max-w-6xl mx-auto">
+
+      <!-- Section header -->
+      <div class="text-center mb-20" data-animate>
+        <p class="font-body text-xs tracking-widest uppercase mb-4" style="color:#CA8A04; letter-spacing:0.3em;">Why Blender King</p>
+        <h2 class="font-heading font-bold text-white leading-tight" style="font-size: clamp(2.2rem, 5vw, 3.8rem);">
+          Engineered for<br/><em class="not-italic gold-text">Excellence</em>
+        </h2>
+        <div class="divider mx-auto mt-6"></div>
+      </div>
+
+      <!-- Bento grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <!-- Card 1: Power -->
+        <div class="glass-card rounded-3xl p-8 lg:p-10" data-animate style="transition-delay: 0.05s;">
+          <div class="mb-6">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="44" height="44" rx="12" fill="rgba(202,138,4,0.1)"/>
+              <path d="M24 8L14 24H22L20 36L30 20H22L24 8Z" stroke="#CA8A04" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3 class="font-heading font-semibold text-white mb-3" style="font-size:1.5rem;">2,400W Peak Power</h3>
+          <p class="font-body font-light text-white/50 leading-relaxed" style="font-size:0.95rem; line-height:1.75;">
+            Dual-stage motor technology delivers relentless torque — crushing ice, frozen fruit, and fibrous roots in under three seconds.
+          </p>
+        </div>
+
+        <!-- Card 2: Speed -->
+        <div class="glass-card rounded-3xl p-8 lg:p-10" data-animate style="transition-delay: 0.12s;">
+          <div class="mb-6">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="44" height="44" rx="12" fill="rgba(202,138,4,0.1)"/>
+              <circle cx="22" cy="22" r="8" stroke="#CA8A04" stroke-width="1.8"/>
+              <path d="M22 14V10M22 34V30M30 22H34M10 22H14" stroke="#CA8A04" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M22 22L27 17" stroke="#CA8A04" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 class="font-heading font-semibold text-white mb-3" style="font-size:1.5rem;">12 Precision Speeds</h3>
+          <p class="font-body font-light text-white/50 leading-relaxed" style="font-size:0.95rem; line-height:1.75;">
+            From a gentle fold to a full-throttle cyclone — each of the 12 stages is calibrated for a specific texture, every single time.
+          </p>
+        </div>
+
+        <!-- Card 3: Noise Shield -->
+        <div class="glass-card rounded-3xl p-8 lg:p-10" data-animate style="transition-delay: 0.19s;">
+          <div class="mb-6">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="44" height="44" rx="12" fill="rgba(202,138,4,0.1)"/>
+              <path d="M18 16L12 20V24L18 28V16Z" stroke="#CA8A04" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M18 20V24" stroke="#CA8A04" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M22 18C23.5 19.5 24 21 24 22C24 23 23.5 24.5 22 26" stroke="#CA8A04" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M26 15C28.5 17.5 29.5 20 29.5 22C29.5 24 28.5 26.5 26 29" stroke="#CA8A04" stroke-width="1.8" stroke-linecap="round"/>
+              <line x1="30" y1="14" x2="14" y2="30" stroke="#CA8A04" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 class="font-heading font-semibold text-white mb-3" style="font-size:1.5rem;">Noise Shield Enclosure</h3>
+          <p class="font-body font-light text-white/50 leading-relaxed" style="font-size:0.95rem; line-height:1.75;">
+            Acoustic-grade sound dampening reduces operating noise to a whisper. Blend at 6 AM without waking a soul.
+          </p>
+        </div>
+
+        <!-- Card 4: Self-Clean -->
+        <div class="glass-card rounded-3xl p-8 lg:p-10" data-animate style="transition-delay: 0.26s;">
+          <div class="mb-6">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="44" height="44" rx="12" fill="rgba(202,138,4,0.1)"/>
+              <path d="M22 12C22 12 28 17 28 22C28 25.3137 25.3137 28 22 28C18.6863 28 16 25.3137 16 22C16 17 22 12 22 12Z" stroke="#CA8A04" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M19 32H25" stroke="#CA8A04" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M22 28V32" stroke="#CA8A04" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M20 21C20.5 22 21.2 22.5 22 22.5" stroke="#CA8A04" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 class="font-heading font-semibold text-white mb-3" style="font-size:1.5rem;">Self-Clean Cycle</h3>
+          <p class="font-body font-light text-white/50 leading-relaxed" style="font-size:0.95rem; line-height:1.75;">
+            Add water, press once. The high-speed clean cycle rinses every surface in 30 seconds — no scrubbing, no disassembly.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       STORY — LARGE TYPE EDITORIAL
+  ══════════════════════════════════════════ -->
+  <section id="story" class="py-32 px-6 overflow-hidden">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="mb-16" data-animate>
+        <p class="font-body text-xs tracking-widest uppercase mb-6" style="color:#CA8A04; letter-spacing:0.3em;">The Story</p>
+        <h2 class="font-heading font-bold text-white leading-none"
+            style="font-size: clamp(2.5rem, 7vw, 6rem); line-height: 1.05;">
+          Not just a blender.<br/>
+          <em class="not-italic gold-text">A statement.</em>
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+        <div data-animate style="transition-delay:0.1s;">
+          <p class="font-body font-light text-white/55 leading-loose" style="font-size:1.05rem; line-height:1.9;">
+            Blender King was born from a single conviction: that performance tools deserve to be beautiful. Most kitchen appliances are designed to be hidden. We designed ours to command attention.
+          </p>
+        </div>
+        <div data-animate style="transition-delay:0.2s;">
+          <p class="font-body font-light text-white/55 leading-loose" style="font-size:1.05rem; line-height:1.9;">
+            Every edge, every surface, every material choice was made with intent. Aerospace-grade stainless blades. A body machined from a single billet of anodized aluminium. This is what uncompromising looks like.
+          </p>
+        </div>
+      </div>
+
+      <!-- Decorative numbers -->
+      <div class="grid grid-cols-3 gap-6 mt-24 pt-12 border-t" style="border-color: rgba(255,255,255,0.06);">
+        <div data-animate style="transition-delay:0.05s;" class="text-center">
+          <p class="font-heading gold-text font-bold" style="font-size: clamp(2.5rem, 6vw, 4.5rem);">2,400<span style="font-size:0.4em; vertical-align:super;">W</span></p>
+          <p class="font-body text-white/35 text-xs tracking-widest uppercase mt-2" style="letter-spacing:0.18em;">Peak Power</p>
+        </div>
+        <div data-animate style="transition-delay:0.12s;" class="text-center">
+          <p class="font-heading gold-text font-bold" style="font-size: clamp(2.5rem, 6vw, 4.5rem);">12</p>
+          <p class="font-body text-white/35 text-xs tracking-widest uppercase mt-2" style="letter-spacing:0.18em;">Speed Stages</p>
+        </div>
+        <div data-animate style="transition-delay:0.19s;" class="text-center">
+          <p class="font-heading gold-text font-bold" style="font-size: clamp(2.5rem, 6vw, 4.5rem);">30<span style="font-size:0.4em; vertical-align:super;">s</span></p>
+          <p class="font-body text-white/35 text-xs tracking-widest uppercase mt-2" style="letter-spacing:0.18em;">Self-Clean</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SPECS — TECH SPECIFICATIONS
+  ══════════════════════════════════════════ -->
+  <section id="specs" class="py-32 px-6">
+    <div class="max-w-4xl mx-auto">
+
+      <div class="text-center mb-16" data-animate>
+        <p class="font-body text-xs tracking-widest uppercase mb-4" style="color:#CA8A04; letter-spacing:0.3em;">Details</p>
+        <h2 class="font-heading font-bold text-white" style="font-size: clamp(2rem, 4.5vw, 3.2rem);">
+          Technical Specifications
+        </h2>
+        <div class="divider mx-auto mt-5"></div>
+      </div>
+
+      <div class="glass rounded-3xl overflow-hidden" data-animate style="transition-delay:0.1s;">
+        <div class="spec-row flex items-center px-8 py-5">
+          <span class="font-body text-white/35 text-sm tracking-wider uppercase w-1/2" style="letter-spacing:0.1em;">Motor Power</span>
+          <span class="font-body text-white font-medium text-sm w-1/2">2,400W Peak · 1,800W Continuous</span>
+        </div>
+        <div class="spec-row flex items-center px-8 py-5">
+          <span class="font-body text-white/35 text-sm tracking-wider uppercase w-1/2" style="letter-spacing:0.1em;">Blade Material</span>
+          <span class="font-body text-white font-medium text-sm w-1/2">Hardened Stainless Steel (Grade 316)</span>
+        </div>
+        <div class="spec-row flex items-center px-8 py-5">
+          <span class="font-body text-white/35 text-sm tracking-wider uppercase w-1/2" style="letter-spacing:0.1em;">Container Capacity</span>
+          <span class="font-body text-white font-medium text-sm w-1/2">2.0L BPA-Free Tritan™ Copolyester</span>
+        </div>
+        <div class="spec-row flex items-center px-8 py-5">
+          <span class="font-body text-white/35 text-sm tracking-wider uppercase w-1/2" style="letter-spacing:0.1em;">Speed Settings</span>
+          <span class="font-body text-white font-medium text-sm w-1/2">12 Stages + Pulse + Self-Clean</span>
+        </div>
+        <div class="spec-row flex items-center px-8 py-5">
+          <span class="font-body text-white/35 text-sm tracking-wider uppercase w-1/2" style="letter-spacing:0.1em;">Noise Level</span>
+          <span class="font-body text-white font-medium text-sm w-1/2">≤ 62 dB with Enclosure Active</span>
+        </div>
+        <div class="spec-row flex items-center px-8 py-5">
+          <span class="font-body text-white/35 text-sm tracking-wider uppercase w-1/2" style="letter-spacing:0.1em;">Body</span>
+          <span class="font-body text-white font-medium text-sm w-1/2">Anodized Aluminium · Matte Black</span>
+        </div>
+        <div class="spec-row flex items-center px-8 py-5">
+          <span class="font-body text-white/35 text-sm tracking-wider uppercase w-1/2" style="letter-spacing:0.1em;">Dimensions</span>
+          <span class="font-body text-white font-medium text-sm w-1/2">22 × 22 × 52 cm · 4.8 kg</span>
+        </div>
+        <div class="spec-row flex items-center px-8 py-5">
+          <span class="font-body text-white/35 text-sm tracking-wider uppercase w-1/2" style="letter-spacing:0.1em;">Warranty</span>
+          <span class="font-body text-white font-medium text-sm w-1/2" style="color:#CA8A04;">10 Years — Full Coverage</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       CTA — ORDER SECTION
+  ══════════════════════════════════════════ -->
+  <section id="order" class="relative py-40 px-6 text-center overflow-hidden">
+    <!-- Top glow strip -->
+    <div class="cta-glow"></div>
+
+    <!-- Subtle radial glow -->
+    <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(202,138,4,0.06) 0%, transparent 70%);"></div>
+
+    <div class="relative max-w-3xl mx-auto" data-animate>
+      <p class="font-body text-xs tracking-widest uppercase mb-6" style="color:#CA8A04; letter-spacing:0.3em;">Own One</p>
+      <h2 class="font-heading font-bold text-white mb-6 leading-tight" style="font-size: clamp(2.2rem, 6vw, 4.5rem);">
+        Ready to blend<br/><em class="not-italic gold-text">differently?</em>
+      </h2>
+      <p class="font-body font-light text-white/40 mb-12 max-w-md mx-auto leading-loose" style="font-size:1rem;">
+        Free worldwide shipping. 10-year warranty. 30-day no-questions-asked returns.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="#" class="btn-gold font-body font-semibold tracking-widest uppercase px-12 py-4 rounded-full text-sm" style="letter-spacing:0.14em; min-width:200px;">
+          Order Now — $499
+        </a>
+        <a href="#specs" class="font-body font-light text-white/40 hover:text-white/70 transition-colors duration-200 text-sm tracking-wide">
+          View full specs ↑
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════ -->
+  <footer class="py-10 px-6" style="border-top: 1px solid rgba(255,255,255,0.06);">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+
+      <!-- Wordmark -->
+      <a href="#hero" class="font-heading font-bold text-white/60 hover:text-white transition-colors duration-200" style="letter-spacing:0.2em; font-size:0.9rem;">
+        BLENDER KING
+      </a>
+
+      <!-- Copyright -->
+      <p class="font-body text-white/25 text-xs tracking-wider order-last md:order-none" style="letter-spacing:0.1em;">
+        © 2024 Blender King. All rights reserved.
+      </p>
+
+      <!-- Social icons -->
+      <div class="flex items-center gap-5">
+
+        <!-- Instagram -->
+        <a href="#" class="text-white/30 hover:text-white/80 transition-colors duration-200 cursor-pointer" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
+          </svg>
+        </a>
+
+        <!-- X/Twitter -->
+        <a href="#" class="text-white/30 hover:text-white/80 transition-colors duration-200 cursor-pointer" aria-label="X (Twitter)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 4L10.5 12.5M4 4H8L20 20H16L4 4ZM20 4L13.5 11.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </a>
+
+        <!-- Pinterest / Globe -->
+        <a href="#" class="text-white/30 hover:text-white/80 transition-colors duration-200 cursor-pointer" aria-label="Website">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M3 12H21M12 3C10 7 9 10 9 12C9 14 10 17 12 21M12 3C14 7 15 10 15 12C15 14 14 17 12 21" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </a>
+
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ══════════════════════════════════════════
+       JAVASCRIPT
+  ══════════════════════════════════════════ -->
+  <script>
+    // ── Navbar scroll effect ──────────────────
+    const navbar = document.getElementById('navbar');
+    const onScroll = () => {
+      if (window.scrollY > 60) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // ── Mobile menu toggle ────────────────────
+    const menuToggle = document.getElementById('menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const bar1 = document.getElementById('bar1');
+    const bar2 = document.getElementById('bar2');
+    const bar3 = document.getElementById('bar3');
+    let menuOpen = false;
+
+    menuToggle.addEventListener('click', () => {
+      menuOpen = !menuOpen;
+      if (menuOpen) {
+        mobileMenu.classList.remove('hidden');
+        bar1.style.transform = 'translateY(6px) rotate(45deg)';
+        bar2.style.opacity = '0';
+        bar3.style.transform = 'translateY(-6px) rotate(-45deg)';
+        bar3.style.width = '24px';
+      } else {
+        mobileMenu.classList.add('hidden');
+        bar1.style.transform = '';
+        bar2.style.opacity = '';
+        bar3.style.transform = '';
+        bar3.style.width = '';
+      }
+    });
+
+    // Close mobile menu on nav link click
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        menuOpen = false;
+        mobileMenu.classList.add('hidden');
+        bar1.style.transform = '';
+        bar2.style.opacity = '';
+        bar3.style.transform = '';
+        bar3.style.width = '';
+      });
+    });
+
+    // ── Scroll animations (IntersectionObserver) ──
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!prefersReducedMotion) {
+      const animateEls = document.querySelectorAll('[data-animate]');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, {
+        threshold: 0.12,
+        rootMargin: '0px 0px -40px 0px',
+      });
+
+      animateEls.forEach(el => observer.observe(el));
+    } else {
+      // Immediately show all animated elements
+      document.querySelectorAll('[data-animate]').forEach(el => {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      });
+    }
+
+    // ══════════════════════════════════════════
+    // FRAME SCRUBBING — scroll → frame-by-frame
+    // ══════════════════════════════════════════
+    const FRAME_COUNT = 121;
+    const frames = new Array(FRAME_COUNT).fill(null);
+    let loadedCount = 0;
+    let currentFrameIndex = 0;
+    let rafPending = false;
+
+    const canvas = document.getElementById('hero-canvas');
+    const ctx = canvas.getContext('2d');
+    const frameProgress = document.getElementById('frame-progress');
+
+    // ── Canvas sizing — matches viewport ─────
+    function resizeCanvas() {
+      canvas.width = window.innerWidth * (window.devicePixelRatio || 1);
+      canvas.height = window.innerHeight * (window.devicePixelRatio || 1);
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      renderFrame(currentFrameIndex);
+    }
+
+    // ── Draw a frame with object-fit: cover ───
+    function drawImageCover(img) {
+      const cw = canvas.width, ch = canvas.height;
+      const iw = img.naturalWidth, ih = img.naturalHeight;
+      if (!iw || !ih) return;
+      const scale = Math.max(cw / iw, ch / ih);
+      const sw = iw * scale, sh = ih * scale;
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+    }
+
+    function renderFrame(index) {
+      const img = frames[index];
+      if (img && img.complete && img.naturalWidth > 0) {
+        drawImageCover(img);
+      }
+    }
+
+    // ── Preload all frames ────────────────────
+    function padNum(n) { return String(n).padStart(4, '0'); }
+
+    function loadFrames() {
+      // Load frame 0 first so canvas shows immediately
+      const first = new Image();
+      first.src = `frames/frame0001.jpg`;
+      first.onload = () => {
+        frames[0] = first;
+        loadedCount++;
+        resizeCanvas(); // draw first frame now
+        // Then load the rest
+        for (let i = 1; i < FRAME_COUNT; i++) {
+          loadFrame(i);
+        }
+      };
+      frames[0] = first;
+    }
+
+    function loadFrame(i) {
+      const img = new Image();
+      img.src = `frames/frame${padNum(i + 1)}.jpg`;
+      img.onload = () => {
+        frames[i] = img;
+        loadedCount++;
+      };
+      frames[i] = img;
+    }
+
+    // ── Scroll → frame mapping (full page) ────
+    function onScrollFrames() {
+      const scrollTop = window.scrollY;
+      const scrollRange = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = scrollRange > 0 ? Math.max(0, Math.min(1, scrollTop / scrollRange)) : 0;
+
+      // Map progress across entire page scroll to all 121 frames
+      const targetFrame = Math.min(FRAME_COUNT - 1, Math.floor(progress * FRAME_COUNT));
+
+      // Progress bar
+      frameProgress.style.width = (progress * 100) + '%';
+
+      // Render on RAF for smoothness
+      if (targetFrame !== currentFrameIndex) {
+        currentFrameIndex = targetFrame;
+        if (!rafPending) {
+          rafPending = true;
+          requestAnimationFrame(() => {
+            renderFrame(currentFrameIndex);
+            rafPending = false;
+          });
+        }
+      }
+    }
+
+    window.addEventListener('scroll', onScrollFrames, { passive: true });
+    window.addEventListener('resize', resizeCanvas);
+
+    // ── Init ──────────────────────────────────
+    resizeCanvas();
+    loadFrames();
+  </script>
+
+</body>
+</html>
